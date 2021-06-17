@@ -25,14 +25,14 @@ NR_CHANNELS = len([AGENT_CHANNEL,GOAL_CHANNEL,OBSTACLE_CHANNEL])
 
 class RoomsEnv(gym.Env):
 
-    def __init__(self, width, height, obstacles, time_limit, stochastic=False, movie_filename=None):
+    def __init__(self, width, height, obstacles, time_limit, stochastic=False, movie_filename=None, subgoals = None):
         self.seed()
         self.movie_filename = movie_filename
         self.action_space = spaces.Discrete(len(ROOMS_ACTIONS))
         self.observation_space = spaces.Box(-numpy.inf, numpy.inf, shape=(NR_CHANNELS,width,height))
         self.agent_position = None
         self.done = False
-        self.subgoal_position = []
+        self.subgoal_position = subgoals
         self.goal_position = (width-2,height-2)
         self.obstacles = obstacles
         self.time_limit = time_limit
@@ -50,6 +50,9 @@ class RoomsEnv(gym.Env):
         state[AGENT_CHANNEL][x_agent][y_agent] = 1
         x_goal, y_goal = self.goal_position
         state[GOAL_CHANNEL][x_goal][y_goal] = 1
+        for subgoal in self.subgoal_position:
+            x,y = subgoal
+            state[GOAL_CHANNEL][x][y] = 0.3
         for obstacle in self.obstacles:
             x,y = obstacle
             state[OBSTACLE_CHANNEL][x][y] = 1
@@ -145,3 +148,7 @@ def read_map_file(path):
 def load_env(path, movie_filename, time_limit=100, stochastic=False):
     width, height, obstacles = read_map_file(path)
     return RoomsEnv(width, height, obstacles, time_limit, stochastic, movie_filename)
+
+def load_env_with_Subgoals(path, movie_filename, subgoals, time_limit=100, stochastic=False):
+    width, height, obstacles = read_map_file(path)
+    return RoomsEnv(width, height, obstacles, time_limit, stochastic, movie_filename, subgoals)
