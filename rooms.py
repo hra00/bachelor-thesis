@@ -4,6 +4,7 @@ import pathlib
 from gym import spaces
 from gym.utils import seeding
 import matplotlib.pyplot as plot
+from numpy.random import random_integers
 import seaborn as sns
 import random
 import copy
@@ -31,6 +32,7 @@ class RoomsEnv(gym.Env):
         self.observation_space = spaces.Box(-numpy.inf, numpy.inf, shape=(NR_CHANNELS,width,height))
         self.agent_position = None
         self.done = False
+        self.subgoal_position = []
         self.goal_position = (width-2,height-2)
         self.obstacles = obstacles
         self.time_limit = time_limit
@@ -118,6 +120,9 @@ class RoomsEnv(gym.Env):
                 return mplfig_to_npimage(fig)
             animation = VideoClip(make_frame, duration=duration)
             animation.write_videofile(self.movie_filename, fps=1)
+
+    def set_subgoals(self, population):
+        self.subgoal_position.extend(population)
         
 def read_map_file(path):
     file = pathlib.Path(path)
