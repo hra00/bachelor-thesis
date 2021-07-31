@@ -25,14 +25,14 @@ NR_CHANNELS = len([AGENT_CHANNEL,GOAL_CHANNEL,OBSTACLE_CHANNEL])
 
 class RoomsEnv(gym.Env):
 
-    def __init__(self, width, height, obstacles, time_limit, stochastic=False, movie_filename=None, subgoals = None):
+    def __init__(self, width, height, obstacles, time_limit, stochastic=False, movie_filename=None):
         self.seed()
         self.movie_filename = movie_filename
         self.action_space = spaces.Discrete(len(ROOMS_ACTIONS))
         self.observation_space = spaces.Box(-numpy.inf, numpy.inf, shape=(NR_CHANNELS,width,height))
         self.agent_position = None
         self.done = False
-        self.subgoal_position = subgoals
+        self.subgoal_position = []
         self.goal_position = (width-2,height-2)
         self.obstacles = obstacles
         self.time_limit = time_limit
@@ -50,9 +50,10 @@ class RoomsEnv(gym.Env):
         state[AGENT_CHANNEL][x_agent][y_agent] = 1
         x_goal, y_goal = self.goal_position
         state[GOAL_CHANNEL][x_goal][y_goal] = 1
-        for subgoal in self.subgoal_position:
-            x,y = subgoal
-            state[GOAL_CHANNEL][x][y] = 0.3
+        if self.subgoal_position:
+            for subgoal in self.subgoal_position:
+                x,y = subgoal
+                state[GOAL_CHANNEL][x][y] = 0.3
         for obstacle in self.obstacles:
             x,y = obstacle
             state[OBSTACLE_CHANNEL][x][y] = 1
@@ -83,8 +84,10 @@ class RoomsEnv(gym.Env):
         elif action == MOVE_EAST and x+1 < self.width:
             self.set_position_if_no_obstacle((x+1, y))
         goal_reached = self.agent_position == self.goal_position
-        if goal_reached:
+        if goal_reached or self.agent_position in self.subgoal_position:
             reward = 1
+            if self.agent_position in self.subgoal_position:
+                self.subgoal_position.remove(self.agent_position)
         self.undiscounted_return += reward
         self.done = goal_reached or self.time >= self.time_limit
         return self.state(), reward, self.done, {}
@@ -124,8 +127,9 @@ class RoomsEnv(gym.Env):
             animation = VideoClip(make_frame, duration=duration)
             animation.write_videofile(self.movie_filename, fps=1)
 
-    def set_subgoals(self, population):
-        self.subgoal_position.extend(population)
+    def set_subgoals(self, subgoals):
+        self.subgoal_position.clear()
+        self.subgoal_position.extend(subgoals)
         
 def read_map_file(path):
     file = pathlib.Path(path)
@@ -149,6 +153,7 @@ def load_env(path, movie_filename, time_limit=100, stochastic=False):
     width, height, obstacles = read_map_file(path)
     return RoomsEnv(width, height, obstacles, time_limit, stochastic, movie_filename)
 
-def load_env_with_Subgoals(path, movie_filename, subgoals, time_limit=100, stochastic=False):
+def load_env_with_subgoals(path, movie_filename, subgoals, time_limit=100, stochastic=False):
     width, height, obstacles = read_map_file(path)
     return RoomsEnv(width, height, obstacles, time_limit, stochastic, movie_filename, subgoals)
+
