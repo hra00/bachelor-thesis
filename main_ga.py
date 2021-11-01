@@ -1,11 +1,10 @@
 import random
-
 import numpy
-
 import rooms
 import agent as a
 import matplotlib.pyplot as plot
 import genitic_algorithm as ga
+
 
 def episode(env, agent, nr_episode=0):
     state = env.reset()
@@ -26,8 +25,10 @@ def episode(env, agent, nr_episode=0):
     print(nr_episode, ":", discounted_return)
     return discounted_return
 
-def episode_with_ga(env, agent):
+
+def episode_with_ga(env, agent, subgoal):
     state = env.reset()
+    env.set_subgoals(subgoal)
     discounted_return = 0
     discount_factor = 0.99
     done = False
@@ -47,25 +48,32 @@ def episode_with_ga(env, agent):
         fitness = 1
     return [discounted_return, fitness]
 
+
 def subgoal_evolution(env, agent, ga, nr_generation, num_iteration):
     for i in range(nr_generation):
-        fitnesses = []
-        print("generation :", i)
+        discounted_returns = []
         for j in range(len(ga.population)):
-            fitness = []
-            discounted_return = []
-            for k in range(num_iteration):
-                env.set_subgoals(ga.population[j])
-                result = episode_with_ga(env, agent)
-                fitness.append(result[1])
-                discounted_return.append(result[0])
-            print("individual ", j, " : ", ga.population[j])
-            print("   - fitness :", fitness, " mean :", numpy.mean(fitness))
-            print("   - discounted_return :", discounted_return, " mean :", numpy.mean(discounted_return))
-            ga.fitnesses.append(numpy.mean(fitnesses))
+            discounted_return, fitness = 0, 0
+            returns = [episode_with_ga(env, agent, ga.population[j]) for _ in range(num_iteration)]
+            print(returns)
+            for discounted_return_i, fitness_i in returns:
+                discounted_return += discounted_return_i
+                fitness += fitness_i
+            ga.fitnesses.append(fitness/num_iteration)
+            discounted_returns.append(discounted_return/num_iteration)
+            save_result(env,num_iteration,returns)
         ga.next_generation(env, prop_elite, prob_mutation, prop_offsprings)
-    return fitness
+    return discounted_returns
 
+def save_result(env, num_iteration, returns):
+    x = range(num_iteration)
+    y = returns
+    plot.plot(x, y)
+    plot.title("Progress")
+    plot.xlabel("episode")
+    plot.ylabel("discounted return")
+    plot.show()
+    env.save_video()
 
 params = {}
 env = rooms.load_env("layouts/rooms_9_9_4.txt", "rooms.mp4")
@@ -74,29 +82,17 @@ params["gamma"] = 0.99
 params["horizon"] = 10
 params["simulations"] = 100
 params["env"] = env
-agent = a.MonteCarloTreeSearchPlanner(params)
-nr_episodes = 1
 
-ga = ga.initial_population(env, 10, 4)
+agent = a.MonteCarloTreeSearchPlanner(params)
+
+population_size = 2
+num_subgoals = 4
+ga = ga.initial_population(env, population_size, num_subgoals)
 prop_elite = 0.1
 prob_mutation = 0.4
 prop_offsprings = 0.5
-nr_generation = 10
-num_iteration = 10
+nr_generation = 2
+num_iteration = 2
 
-subgoal_evolution(env, agent, ga, nr_generation, num_iteration)
+print(subgoal_evolution(env,agent,ga,nr_generation,num_iteration))
 
-"""
-returns = [episode(env, agent, i) for i in range(nr_episodes)]
-
-x = range(nr_episodes)
-y = returns
-
-plot.plot(x, y)
-plot.title("Progress")
-plot.xlabel("episode")
-plot.ylabel("discounted return")
-plot.show()
-
-env.save_video()
-"""

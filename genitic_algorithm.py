@@ -2,6 +2,7 @@ import numpy
 import random
 from numpy.random import random_integers
 
+
 class GeneticAlgorithm:
     def __init__(self, population):
         self.population = population
@@ -10,6 +11,7 @@ class GeneticAlgorithm:
     """
      Genetic Algorithm
     """
+
     def next_generation(self, env, prop_elite, prob_mutation, prop_offsprings):
         size = len(self.population)
         next_generation = []
@@ -56,7 +58,7 @@ class GeneticAlgorithm:
             next_generation.extend(offsprings)
 
         if len(next_generation) != len(self.population):
-            del next_generation[len(next_generation)-1]
+            del next_generation[len(next_generation) - 1]
 
         self.population = next_generation
         self.fitnesses = []
@@ -65,6 +67,8 @@ class GeneticAlgorithm:
 """
  Creating initial sub-goal set for genetic algorithm 
 """
+
+
 def initial_population(env, population_size, num_sub_goal):
     prohibited = env.obstacles
     prohibited.extend([env.agent_position, env.goal_position])
@@ -80,6 +84,7 @@ def initial_population(env, population_size, num_sub_goal):
                     break
     return GeneticAlgorithm(population)
 
+
 def mutation(env, individual):
     prohibited = []
     prohibited.extend(env.obstacles + [env.agent_position, env.goal_position] + individual)
@@ -89,7 +94,7 @@ def mutation(env, individual):
         x = random_integers(env.height - 2)
         y = random_integers(env.width - 2)
         if (x, y) not in prohibited:
-            i = random_integers(len(individual)-1)
+            i = random_integers(len(individual) - 1)
             mutated[i] = (x, y)
             break
     return mutated

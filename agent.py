@@ -7,6 +7,8 @@ from multi_armed_bandits import random_bandit, epsilon_greedy, boltzmann, UCB1
 """
  Base class of an autonomously acting and learning agent.
 """
+
+
 class Agent:
 
     def __init__(self, params):
@@ -15,6 +17,7 @@ class Agent:
     """
      Behavioral strategy of the agent. Maps states to actions.
     """
+
     def policy(self, state):
         pass
 
@@ -22,24 +25,30 @@ class Agent:
      Learning method of the agent. Integrates experience into
      the agent's current knowledge.
     """
+
     def update(self, state, action, reward, next_state, done):
         pass
-        
+
 
 """
  Randomly acting agent.
 """
+
+
 class RandomAgent(Agent):
 
     def __init__(self, params):
         super(RandomAgent, self).__init__(params)
-        
+
     def policy(self, state):
         return random.choice(range(self.nr_actions))
+
 
 """
  Autonomous agent using Monte Carlo Rollout Planning.
 """
+
+
 class MonteCarloRolloutPlanner(Agent):
 
     def __init__(self, params):
@@ -48,7 +57,7 @@ class MonteCarloRolloutPlanner(Agent):
         self.gamma = params["gamma"]
         self.horizon = params["horizon"]
         self.simulations = params["simulations"]
-        
+
     def policy(self, state):
         # Tracks Q-values of each action (in the first step)
         Q_values = numpy.zeros(self.nr_actions)
@@ -61,19 +70,22 @@ class MonteCarloRolloutPlanner(Agent):
             discounted_return = 0
             for t, action in enumerate(random_plan):
                 _, reward, done, _ = generative_model.step(action)
-                discounted_return += reward*(self.gamma**t)
+                discounted_return += reward * (self.gamma ** t)
             first_action = random_plan[0]
             action_counts[first_action] += 1
             N = action_counts[first_action]
-            Q_values[first_action] = (N-1)*Q_values[first_action] + discounted_return
+            Q_values[first_action] = (N - 1) * Q_values[first_action] + discounted_return
             Q_values[first_action] /= N
         return numpy.argmax(Q_values)
+
 
 """
  Represents a (state) node in Monte Carlo Tree Search.
 """
+
+
 class MonteCarloTreeSearchNode:
-    
+
     def __init__(self, params):
         self.params = params
         self.gamma = params["gamma"]
@@ -87,41 +99,46 @@ class MonteCarloTreeSearchNode:
      Selects an action according to a Multi-armed Bandit strategy.
      @return the selected action.
     """
+
     def select(self, Q_values, action_counts):
         return UCB1(Q_values, action_counts)
 
     """
      Appends a new child node to self.children.
     """
+
     def expand(self):
         self.children.append(MonteCarloTreeSearchNode(self.params))
-        
+
     """
      Performs a rollout for self.horizon-depth time steps.
      @return the obtained discounted return.
     """
+
     def rollout(self, generative_model, depth):
         discounted_return = 0
-        plan = numpy.random.randint(0, self.nr_actions, self.horizon-depth)
+        plan = numpy.random.randint(0, self.nr_actions, self.horizon - depth)
         for t, action in enumerate(plan):
             _, reward, done, _ = generative_model.step(action)
-        discounted_return += reward*(self.gamma**t)
+        discounted_return += reward * (self.gamma ** t)
         return discounted_return
-        
+
     """
      Updates the Q-values of this node according to
      the observed discounted return and the selected action.
     """
+
     def backup(self, discounted_return, action):
         self.action_counts[action] += 1
         N = self.action_counts[action]
-        self.Q_values[action] = (N-1)*self.Q_values[action] + discounted_return
+        self.Q_values[action] = (N - 1) * self.Q_values[action] + discounted_return
         self.Q_values[action] /= N
-        
+
     """
      Makes a final decision based on the currently learned Q-values.
      @return the action with the highest Q-value.
     """
+
     def final_decision(self):
         return numpy.argmax(self.Q_values)
 
@@ -129,6 +146,7 @@ class MonteCarloTreeSearchNode:
      Indicates if this node is still a leaf node.
      @return True if this leaf is not fully expanded yet. False otherwise.
     """
+
     def isLeaf(self):
         return len(self.children) < self.nr_actions
 
@@ -136,47 +154,54 @@ class MonteCarloTreeSearchNode:
      Performs a simulation step in this node.
      @return the discounted return observed from this node.
     """
+
     def simulate(self, generative_model, depth):
         if depth >= self.horizon:
             return 0
         if self.isLeaf():
             self.expand()
-            selected_action = len(self.children) - 1 # Select action that leads to new child node
+            selected_action = len(self.children) - 1  # Select action that leads to new child node
             _, reward, done, _ = generative_model.step(selected_action)
             return self.simulate_with_rollout(generative_model, selected_action, depth)
         selected_action = self.select(self.Q_values, self.action_counts)
         return self.simulate_with_selection(generative_model, selected_action, depth)
-            
+
     """
      Simulates and evaluates an action with a subsequent rollout.
      @return the discounted return observed from this node.
     """
+
     def simulate_with_rollout(self, generative_model, action, depth):
         return self.simulate_action(generative_model, action, depth, self.rollout)
-        
+
     """
      Simulates and evaluates an action with a simulation at a child node.
      @return the discounted return observed from this node.
     """
+
     def simulate_with_selection(self, generative_model, action, depth):
         return self.simulate_action(generative_model, action, depth, self.children[action].simulate)
-     
+
     """
      Simulates and evaluates an action with a subsequent evaluation function.
      @return the discounted return observed from this node.
-    """     
+    """
+
     def simulate_action(self, generative_model, action, depth, eval_func):
         _, reward, done, _ = generative_model.step(action)
         delayed_return = 0
         if not done:
-            delayed_return = eval_func(generative_model, depth+1)
-        discounted_return = reward + self.gamma*delayed_return
+            delayed_return = eval_func(generative_model, depth + 1)
+        discounted_return = reward + self.gamma * delayed_return
         self.backup(discounted_return, action)
         return discounted_return
-        
+
+
 """
  Autonomous agent using Monte Carlo Tree Search for Planning.
 """
+
+
 class MonteCarloTreeSearchPlanner(Agent):
 
     def __init__(self, params):
