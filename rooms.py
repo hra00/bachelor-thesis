@@ -33,7 +33,7 @@ class RoomsEnv(gym.Env):
         self.observation_space = spaces.Box(-numpy.inf, numpy.inf, shape=(NR_CHANNELS, width, height))
         self.agent_position = None
         self.done = False
-        self.subgoal_position = []  #
+        self.subgoal_position = []
         self.goal_position = (width - 2, height - 2)
         self.obstacles = obstacles
         self.time_limit = time_limit
@@ -54,7 +54,7 @@ class RoomsEnv(gym.Env):
         if self.subgoal_position:
             for subgoal in self.subgoal_position:
                 x, y = subgoal
-                state[GOAL_CHANNEL][x][y] = 0.3
+                state[GOAL_CHANNEL][x][y] = 0.7
         for obstacle in self.obstacles:
             x, y = obstacle
             state[OBSTACLE_CHANNEL][x][y] = 1
@@ -85,10 +85,12 @@ class RoomsEnv(gym.Env):
         elif action == MOVE_EAST and x + 1 < self.width:
             self.set_position_if_no_obstacle((x + 1, y))
         goal_reached = self.agent_position == self.goal_position
-        if goal_reached or self.agent_position in self.subgoal_position:
+        if goal_reached:
+            #print('goal_reached', self.time)
             reward = 1
-            if self.agent_position in self.subgoal_position:
-                self.subgoal_position.remove(self.agent_position)
+        if self.agent_position in self.subgoal_position:
+            reward = 0.25
+            self.subgoal_position.remove(self.agent_position)
         self.undiscounted_return += reward
         self.done = goal_reached or self.time >= self.time_limit
         return self.state(), reward, self.done, {}
@@ -102,6 +104,7 @@ class RoomsEnv(gym.Env):
         self.agent_position = (1, 1)
         self.time = 0
         self.state_history.clear()
+        self.subgoal_position.clear()
         return self.state()
 
     def state_summary(self, state):
@@ -119,7 +122,6 @@ class RoomsEnv(gym.Env):
             history_of_states = self.state_history
             duration = len(history_of_states)
             fig, ax = plot.subplots()
-
             def make_frame(t):
                 ax.clear()
                 ax.grid(False)
@@ -127,12 +129,10 @@ class RoomsEnv(gym.Env):
                 ax.tick_params(axis='both', which='both', bottom=False, top=False, left=False, right=False,
                                labelleft=False, labelbottom=False)
                 return mplfig_to_npimage(fig)
-
             animation = VideoClip(make_frame, duration=duration)
             animation.write_videofile(self.movie_filename, fps=1)
 
     def set_subgoals(self, subgoals):
-        self.subgoal_position.clear()
         self.subgoal_position.extend(subgoals)
 
 
@@ -158,8 +158,3 @@ def read_map_file(path):
 def load_env(path, movie_filename, time_limit=100, stochastic=False):
     width, height, obstacles = read_map_file(path)
     return RoomsEnv(width, height, obstacles, time_limit, stochastic, movie_filename)
-
-
-def load_env_with_subgoals(path, movie_filename, subgoals, time_limit=100, stochastic=False):
-    width, height, obstacles = read_map_file(path)
-    return RoomsEnv(width, height, obstacles, time_limit, stochastic, movie_filename, subgoals)

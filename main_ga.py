@@ -44,6 +44,7 @@ def episode_with_ga(env, agent, subgoal):
         state = next_state
         discounted_return += reward * (discount_factor ** time_step)
         time_step += 1
+        #print(time_step)
     if done and discounted_return > 0:
         fitness = 1
     return [discounted_return, fitness]
@@ -61,18 +62,20 @@ def subgoal_evolution(env, agent, ga, nr_generation, num_iteration):
                 fitness += fitness_i
             ga.fitnesses.append(fitness/num_iteration)
             discounted_returns.append(discounted_return/num_iteration)
-            save_result(env,num_iteration,returns)
+            save_result(env,i,j,num_iteration,returns)
         ga.next_generation(env, prop_elite, prob_mutation, prop_offsprings)
     return discounted_returns
 
-def save_result(env, num_iteration, returns):
+def save_result(env, nr_generation ,nr_iteration, num_iteration, returns):
+    env.movie_filename = "Genaration_" + str(nr_generation) + " | " + str(nr_iteration) + " of " + str(num_iteration) + ".mp4"
+    plot_name = "Genaration_" + str(nr_generation) + " | " + str(nr_iteration) + " of " + str(num_iteration) + ".png"
     x = range(num_iteration)
     y = returns
     plot.plot(x, y)
     plot.title("Progress")
     plot.xlabel("episode")
-    plot.ylabel("discounted return")
-    plot.show()
+    plot.ylabel("discounted return & fitness")
+    plot.savefig(plot_name)
     env.save_video()
 
 params = {}
