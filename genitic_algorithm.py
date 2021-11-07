@@ -71,7 +71,7 @@ class GeneticAlgorithm:
 
 
 def initial_population(env, population_size, num_sub_goal):
-    prohibited = copy.copy(env.obstacles)
+    prohibited = copy.deepcopy(env.obstacles)
     prohibited.extend([(1, 1), env.goal_position])
     population = []
     for i in range(population_size):
@@ -87,7 +87,7 @@ def initial_population(env, population_size, num_sub_goal):
 
 
 def mutation(env, individual):
-    prohibited = copy.copy(env.obstacles)
+    prohibited = copy.deepcopy(env.obstacles)
     prohibited.extend([(1, 1), env.goal_position] + individual)
     mutated = []
     mutated.extend(individual)
