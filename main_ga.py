@@ -44,9 +44,8 @@ def episode_with_ga(env, agent, subgoal):
         state = next_state
         discounted_return += reward * (discount_factor ** time_step)
         time_step += 1
-        #print(time_step)
-    if done and discounted_return > 0:
-        fitness = 1
+    if done and discounted_return > 1:
+        fitness = 1 - (time_step/100)
     return [discounted_return, fitness]
 
 
@@ -88,14 +87,14 @@ params["env"] = env
 
 agent = a.MonteCarloTreeSearchPlanner(params)
 
-population_size = 2
+population_size = 20
 num_subgoals = 4
 ga = ga.initial_population(env, population_size, num_subgoals)
 prop_elite = 0.1
 prob_mutation = 0.4
 prop_offsprings = 0.5
-nr_generation = 2
-num_iteration = 2
+nr_generation = 20
+num_iteration = 1
 
 print(subgoal_evolution(env,agent,ga,nr_generation,num_iteration))
 

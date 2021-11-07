@@ -54,7 +54,7 @@ class RoomsEnv(gym.Env):
         if self.subgoal_position:
             for subgoal in self.subgoal_position:
                 x, y = subgoal
-                state[GOAL_CHANNEL][x][y] = 0.7
+                state[GOAL_CHANNEL][x][y] = 0.5
         for obstacle in self.obstacles:
             x, y = obstacle
             state[OBSTACLE_CHANNEL][x][y] = 1
@@ -86,7 +86,6 @@ class RoomsEnv(gym.Env):
             self.set_position_if_no_obstacle((x + 1, y))
         goal_reached = self.agent_position == self.goal_position
         if goal_reached:
-            #print('goal_reached', self.time)
             reward = 1
         if self.agent_position in self.subgoal_position:
             reward = 0.25

@@ -1,3 +1,4 @@
+import copy
 import numpy
 import random
 from numpy.random import random_integers
@@ -70,8 +71,8 @@ class GeneticAlgorithm:
 
 
 def initial_population(env, population_size, num_sub_goal):
-    prohibited = env.obstacles
-    prohibited.extend([env.agent_position, env.goal_position])
+    prohibited = copy.copy(env.obstacles)
+    prohibited.extend([(1, 1), env.goal_position])
     population = []
     for i in range(population_size):
         population.append([])
@@ -86,8 +87,8 @@ def initial_population(env, population_size, num_sub_goal):
 
 
 def mutation(env, individual):
-    prohibited = []
-    prohibited.extend(env.obstacles + [env.agent_position, env.goal_position] + individual)
+    prohibited = copy.copy(env.obstacles)
+    prohibited.extend([(1, 1), env.goal_position] + individual)
     mutated = []
     mutated.extend(individual)
     while True:
