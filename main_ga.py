@@ -44,7 +44,7 @@ def episode_with_ga(env, agent, subgoal):
         state = next_state
         discounted_return += reward * (discount_factor ** time_step)
         time_step += 1
-    if done and discounted_return > 1:
+    if done and env.agent_position == env.goal_position:
         fitness = 1 - (time_step/100)
     return [discounted_return, fitness]
 
@@ -66,8 +66,8 @@ def subgoal_evolution(env, agent, ga, nr_generation, num_iteration):
     return discounted_returns
 
 def save_result(env, nr_generation ,nr_iteration, num_iteration, returns):
-    env.movie_filename = "Genaration_" + str(nr_generation) + " | " + str(nr_iteration) + " of " + str(num_iteration) + ".mp4"
-    plot_name = "Genaration_" + str(nr_generation) + " | " + str(nr_iteration) + " of " + str(num_iteration) + ".png"
+    env.movie_filename = "Generation_" + str(nr_generation) + " | " + str(nr_iteration) + " of " + str(num_iteration) + ".mp4"
+    plot_name = "Generation_" + str(nr_generation) + " | " + str(nr_iteration) + " of " + str(num_iteration) + ".png"
     x = range(num_iteration)
     y = returns
     plot.plot(x, y)
@@ -87,13 +87,13 @@ params["env"] = env
 
 agent = a.MonteCarloTreeSearchPlanner(params)
 
-population_size = 20
-num_subgoals = 4
+population_size = 10
+num_subgoals = 2
 ga = ga.initial_population(env, population_size, num_subgoals)
 prop_elite = 0.1
 prob_mutation = 0.4
 prop_offsprings = 0.5
-nr_generation = 20
+nr_generation = 10
 num_iteration = 1
 
 print(subgoal_evolution(env,agent,ga,nr_generation,num_iteration))
