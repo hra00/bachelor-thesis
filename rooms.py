@@ -88,7 +88,7 @@ class RoomsEnv(gym.Env):
         if goal_reached:
             reward = 1
         if self.agent_position in self.subgoal_position:
-            reward = 0.25
+            reward = 0.5
             self.subgoal_position.remove(self.agent_position)
         self.undiscounted_return += reward
         self.done = goal_reached or self.time >= self.time_limit
@@ -121,6 +121,7 @@ class RoomsEnv(gym.Env):
             history_of_states = self.state_history
             duration = len(history_of_states)
             fig, ax = plot.subplots()
+
             def make_frame(t):
                 ax.clear()
                 ax.grid(False)
@@ -128,8 +129,11 @@ class RoomsEnv(gym.Env):
                 ax.tick_params(axis='both', which='both', bottom=False, top=False, left=False, right=False,
                                labelleft=False, labelbottom=False)
                 return mplfig_to_npimage(fig)
+
             animation = VideoClip(make_frame, duration=duration)
             animation.write_videofile(self.movie_filename, fps=1)
+
+            plot.close(fig)
 
     def set_subgoals(self, subgoals):
         self.subgoal_position.extend(subgoals)
