@@ -12,7 +12,6 @@ class GeneticAlgorithm:
     """
      Genetic Algorithm
     """
-
     def next_generation(self, env, prop_elite, prob_mutation, prop_offsprings):
         size = len(self.population)
         next_generation = []
@@ -26,7 +25,7 @@ class GeneticAlgorithm:
             for i in range(num_elite):
                 elite_index = numpy.argmax(self.fitnesses)
                 next_generation.append(self.population[elite_index])
-                del self.fitnesses[elite_index]
+                self.fitnesses[elite_index] = -1
             num_not_changed -= num_elite
 
         # mutation
