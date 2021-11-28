@@ -100,7 +100,7 @@ def crossover(population, num_pair, next_generation):
             crossover_point = round(num_subgoals / 2)
             o1 = p1[:crossover_point] + p2[crossover_point:]
             o2 = p2[:crossover_point] + p1[crossover_point:]
-            if set(o1) != set(o2) and o1 not in next_generation and o2 not in next_generation and len(set(o1)) == 2 and len(set(o2)) == 2:
+            if set(o1) != set(o2) and o1 not in next_generation and o2 not in next_generation and len(set(o1)) == num_subgoals and len(set(o2)) == num_subgoals:
                 next_generation.extend([o1,o2])
                 del p1
                 del p2
