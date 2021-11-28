@@ -1,4 +1,5 @@
 import copy
+import math
 import numpy
 import random
 from numpy.random import random_integers
@@ -12,6 +13,7 @@ class GeneticAlgorithm:
     """
      Genetic Algorithm
     """
+
     def next_generation(self, env, prop_elite, prob_mutation, prop_offsprings):
         size = len(self.population)
         next_generation = []
@@ -29,7 +31,7 @@ class GeneticAlgorithm:
             num_not_changed -= num_elite
 
         # mutation
-        to_mutate = random.sample(self.population, num_mutated)  # randomly mutating
+        to_mutate = random.sample(self.population, num_mutated)
         for i in range(num_mutated):
             while True:
                 mutated = []
@@ -48,27 +50,17 @@ class GeneticAlgorithm:
         num_parents = num_offsprings
         if num_offsprings / 2 != 0:
             num_parents += 1
-        parents = random.sample(self.population, num_parents)
-        for i in range(num_parents // 2):
-            offsprings = crossover(parents[i], parents[i + num_parents // 2])
-            while offsprings[0] in next_generation or offsprings[1] in next_generation:
-                set_parents = [x for x in self.population if x not in parents]
-                alternative_parents = random.sample(set_parents, 2)
-                offsprings = crossover(alternative_parents[0], alternative_parents[1])
-            next_generation.extend(offsprings)
-
+        crossover(self.population, math.ceil(num_offsprings/2), next_generation)
         if len(next_generation) != len(self.population):
-            del next_generation[len(next_generation) - 1]
+            del next_generation[-1]
 
-        self.population = next_generation
+        self.population = [sorted(i) for i in next_generation]
         self.fitnesses = []
 
 
 """
  Creating initial sub-goal set for genetic algorithm 
 """
-
-
 def initial_population(env, population_size, num_sub_goal):
     prohibited = copy.deepcopy(env.obstacles)
     prohibited.extend([(1, 1), env.goal_position])
@@ -82,7 +74,7 @@ def initial_population(env, population_size, num_sub_goal):
                 if (x, y) not in prohibited and (x, y) not in population[i]:
                     population[i].append((x, y))
                     break
-    return GeneticAlgorithm(population)
+    return GeneticAlgorithm([sorted(i) for i in population])
 
 
 def mutation(env, individual):
@@ -93,24 +85,37 @@ def mutation(env, individual):
     while True:
         x = random_integers(env.height - 2)
         y = random_integers(env.width - 2)
-        if (x, y) not in prohibited:
-            i = random_integers(len(individual) - 1)
-            mutated[i] = (x, y)
+        if (x, y) not in prohibited and (x, y) not in mutated:
+            mutated[-1] = (x, y)
             break
     return mutated
 
 
-def crossover(parent1, parent2):
-    num_subgoals = len(parent1)
-    crossover_point = round(num_subgoals / 2)
-    offsprings = []
+def crossover(population, num_pair, next_generation):
+    pool = copy.deepcopy(population)
+    num_subgoals = len(pool[0])
+    for i in range(num_pair):
+        while True:
+            p1, p2 = random.sample(pool, 2)
+            crossover_point = round(num_subgoals / 2)
+            o1 = p1[:crossover_point] + p2[crossover_point:]
+            o2 = p2[:crossover_point] + p1[crossover_point:]
+            if set(o1) != set(o2) and o1 not in next_generation and o2 not in next_generation and len(set(o1)) == 2 and len(set(o2)) == 2:
+                next_generation.extend([o1,o2])
+                del p1
+                del p2
+                break
 
-    p1_1 = parent1[:crossover_point]
-    p1_2 = parent1[crossover_point:]
-    p2_1 = parent2[:crossover_point]
-    p2_2 = parent2[crossover_point:]
 
-    offsprings.append(p1_1 + p2_2)
-    offsprings.append(p2_1 + p1_2)
+"""
+For Diversity Control
+"""
+def dist_ind(A, B):
+    return min([min([math.dist(a, b) for b in B]) for a in A])
 
-    return offsprings
+
+def dist_inp(X, P, limit):
+    ran_p = copy.deepcopy(P)
+    if limit <= len(P):
+        ran_p = random.sample(P, limit)
+    return numpy.mean([dist_ind(X, e) for e in ran_p])
