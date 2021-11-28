@@ -61,19 +61,25 @@ def episode_with_ga(env, agent, subgoal, g, i, it, diversity_control, dist):
     return [discounted_return, fitness, discounted_return_without_subgoals]
 
 
-def subgoal_evolution(env, agent, ga, n_generation, n_iteration, diversity_control):
+def subgoal_evolution(env, agent, ga, n_generation, n_iteration, diversity_control, termination_criteria):
     discounted_returns_xsg_g = []
     discounted_returns_g = []
     fitnesses_g = []
+    bests = []
+
     for i in range(n_generation):  # for each generation
         discounted_returns_xsg_i = []  # discounted returns without subgoal in each generation
         discounted_returns_i = []
+
+        if termination_criteria > 0 and len(bests) >= termination_criteria and is_not_change(bests, termination_criteria):
+            return discounted_returns_xsg_g, discounted_returns_g, fitnesses_g, bests, i
+
         # for each j in generation, calculate distance between j and population (if diversity_control = true)
         dist = [gena.dist_inp(individual, ga.population, 10) for individual in ga.population] if diversity_control else []
         for j in range(len(ga.population)):  # for each individual in population
             # iteration
             returns = [episode_with_ga(env, agent, ga.population[j], i, j, it, diversity_control, dist) for it in range(n_iteration)]
-            print("g :", i, " j : ",ga.population[j], returns)
+            print("g_", i," j_",j,ga.population[j], returns)
             # mean returns for individual j
             mean_dc_j, mean_fitness_j, mean_dc_xsg_j = np.mean(returns, axis=0)
             discounted_returns_i.append(mean_dc_j)
@@ -81,14 +87,20 @@ def subgoal_evolution(env, agent, ga, n_generation, n_iteration, diversity_contr
             ga.fitnesses.append(mean_fitness_j)
         fitnesses_g = copy.deepcopy(ga.fitnesses)
         ga.next_generation(env, prop_elite, prob_mutation, prop_offsprings)
+        bests.append(ga.population[0])
         discounted_returns_xsg_g.append(max(discounted_returns_xsg_i))
-    return discounted_returns_xsg_g, discounted_returns_g, fitnesses_g
+    return discounted_returns_xsg_g, discounted_returns_g, fitnesses_g, bests, n_generation
 
 
 def save_video_g_i_it(env, g, i, it):
     env.movie_filename = "G" + str(g) + " | I" + str(i) + "_" + str(it) + ".mp4"
     env.save_video()
 
+
+def is_not_change(bests, termination_criteria):
+    last_n = bests[len(bests)-termination_criteria:]
+    cps = [ 0 if last_n[0] == last_n[i] else 1 for i in range(1,len(last_n))]
+    return True if sum(cps) == 0 else False
 
 """
 parameters for agent & environment
@@ -115,15 +127,15 @@ prob_mutation = 0.4
 prop_offsprings = 0.5
 n_generation = 10
 n_iteration = 1
-diversity_control = True
-
+diversity_control = 1
+termination_criteria = 2
 
 """
 extract results
 """
-results = subgoal_evolution(env, agent, init_p, n_generation, n_iteration, diversity_control)
+results = subgoal_evolution(env, agent, init_p, n_generation, n_iteration, diversity_control, termination_criteria)
 print(results)
-x = range(n_generation)
+x = range(results[-1])
 y = results[0]
 
 plot.plot(x, y)
