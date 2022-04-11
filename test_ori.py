@@ -27,7 +27,7 @@ def episode(env, agent, nr_episode=0):
 
 
 params = {}
-env = rooms.load_env("layouts/rooms_9_9_4.txt", "rooms.mp4")
+env = rooms.load_env("layouts/rooms_11_11_4.txt", "rooms.mp4")
 params["nr_actions"] = env.action_space.n
 params["gamma"] = 0.99
 params["horizon"] = 10

@@ -136,7 +136,7 @@ def test(times):
         plot.ylabel("discounted return")
         plot.savefig("plot.png")
         plot.close()
-        os.chdir(os.getcwd()[:-3])
+        os.chdir(os.getcwd()[:-(len(save_path)+1)])
     return 0
 
 
@@ -144,11 +144,11 @@ def test(times):
 parameters for agent & environment
 """
 params = {}
-env = rooms.load_env("layouts/rooms_11_11_4.txt", "rooms.mp4")
+env = rooms.load_env("layouts/rooms_17_17_4.txt", "rooms.mp4")
 params["nr_actions"] = env.action_space.n
 params["gamma"] = 0.99
-params["horizon"] = 10
-params["simulations"] = 100
+params["horizon"] = 20
+params["simulations"] = 300
 params["env"] = env
 
 agent = a.MonteCarloTreeSearchPlanner(params)
@@ -171,7 +171,7 @@ termination_criteria = 0
 """
 run
 """
-test(5)
+test(10)
 
 
 """
