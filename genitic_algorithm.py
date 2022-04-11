@@ -69,8 +69,8 @@ def initial_population(env, population_size, num_sub_goal):
         population.append([])
         for j in range(num_sub_goal):
             while True:
-                x = random_integers(env.height - 2)
-                y = random_integers(env.width - 2)
+                x = random_integers(env.width - 2)
+                y = random_integers(env.height - 2)
                 if (x, y) not in prohibited and (x, y) not in population[i]:
                     population[i].append((x, y))
                     break
@@ -83,8 +83,8 @@ def mutation(env, individual):
     mutated = []
     mutated.extend(individual)
     while True:
-        x = random_integers(env.height - 2)
-        y = random_integers(env.width - 2)
+        x = random_integers(env.width - 2)
+        y = random_integers(env.height - 2)
         if (x, y) not in prohibited and (x, y) not in mutated:
             mutated[-1] = (x, y)
             break
